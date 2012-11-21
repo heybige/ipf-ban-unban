@@ -1,0 +1,27 @@
+#!/bin/bash
+
+CIDR=32
+CONF=ipf.conf
+
+IP=`echo $1 | /bin/tr -d '[:alpha:]\:[:space:]'`
+
+ESC_IP=`echo $IP | /bin/sed 's/\./\\\./g'`
+
+EXISTS=`/bin/grep "$ESC_IP" /etc/ipf/$CONF`
+
+if [ -n "$EXISTS" ]; then
+	echo "$IP is already blocked"
+	exit
+fi
+
+REGEX="\.0$"
+
+if [[ $IP =~ $REGEX ]]; then
+    CIDR=24
+fi
+
+CMD="block in quick from $IP/$CIDR to any"
+
+echo $CMD | /usr/sbin/ipf -f -
+
+/bin/echo $CMD >>/etc/ipf/$CONF
